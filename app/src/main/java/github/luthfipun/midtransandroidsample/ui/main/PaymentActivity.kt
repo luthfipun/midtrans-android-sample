@@ -1,13 +1,12 @@
-package github.luthfipun.midtransandroidsample
+package github.luthfipun.midtransandroidsample.ui.main
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.content.Context
+import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 import com.midtrans.sdk.corekit.callback.TransactionFinishedCallback
 import com.midtrans.sdk.corekit.core.MidtransSDK
 import com.midtrans.sdk.corekit.core.TransactionRequest
@@ -18,27 +17,54 @@ import com.midtrans.sdk.corekit.models.ItemDetails
 import com.midtrans.sdk.corekit.models.ShippingAddress
 import com.midtrans.sdk.corekit.models.snap.TransactionResult
 import com.midtrans.sdk.uikit.SdkUIFlowBuilder
-import github.luthfipun.midtransandroidsample.databinding.ActivityMainBinding
+import github.luthfipun.midtransandroidsample.databinding.ActivityPaymentBinding
+import github.luthfipun.midtransandroidsample.domain.model.Product
+import github.luthfipun.midtransandroidsample.domain.util.Constant
+import github.luthfipun.midtransandroidsample.domain.util.currencyID
 import java.util.ArrayList
 
-class MainActivity : AppCompatActivity(), TransactionFinishedCallback {
+class PaymentActivity : AppCompatActivity(), TransactionFinishedCallback {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityPaymentBinding
+    private var product: Product? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        checkPhonePermission()
-        setupMidtrans()
-        binding.btnOrder.setOnClickListener {
-            setupOrders()
+    companion object {
+        private const val DATA = "DATA"
+        fun createIntent(context: Context, product: Product): Intent {
+            return Intent(context, PaymentActivity::class.java).apply {
+                putExtra(DATA, product)
+            }
         }
     }
 
-    private fun setupOrders() {
-        val transactionRequest = TransactionRequest("TRX-001", 10000.00)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityPaymentBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setupMidtrans()
+        initView()
+    }
+
+    private fun initView() {
+        product = intent.getSerializableExtra(DATA) as Product
+        product?.let { productItem ->
+            binding.itemCard.apply {
+                title.text = productItem.title
+                price.text = currencyID(productItem.price)
+                Glide.with(this@PaymentActivity)
+                    .load(productItem.cover)
+                    .into(cover)
+            }
+            binding.btnPay.setOnClickListener {
+                setupOrders(productItem)
+            }
+        }
+    }
+
+    private fun setupOrders(product: Product) {
+        val transactionRequest = TransactionRequest("TRX-${System.currentTimeMillis()}", product.price.toDouble())
+
+        // fake customer details
 
         val customerDetails = CustomerDetails()
         customerDetails.firstName = "Udin"
@@ -61,7 +87,7 @@ class MainActivity : AppCompatActivity(), TransactionFinishedCallback {
 
         val itemDetails = mutableListOf<ItemDetails>()
         itemDetails.add(
-            ItemDetails("1", 10000.0, 1, "Martabak Enak")
+            ItemDetails(product.id.toString(), product.price.toDouble(), 1, product.title)
         )
 
         transactionRequest.customerDetails = customerDetails
@@ -75,24 +101,15 @@ class MainActivity : AppCompatActivity(), TransactionFinishedCallback {
 
     private fun setupMidtrans() {
 
-        val key = "SB-Mid-client-KKI3tFxIxaOTiXrG"
-        val url = "http://test-midtrans-server.wflixy.com/api/"
-
         SdkUIFlowBuilder.init()
-            .setClientKey(key)
+            .setClientKey(Constant.MIDTRANS_KEY)
             .setContext(this)
             .setTransactionFinishedCallback(this)
-            .setMerchantBaseUrl(url)
+            .setMerchantBaseUrl(Constant.BASE_URL)
             .enableLog(true)
             .setColorTheme(CustomColorTheme("#FFE51255", "#B61548", "#FFE51255"))
             .setLanguage("id")
             .buildSDK()
-    }
-
-    private fun checkPhonePermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE), 101)
-        }
     }
 
     override fun onTransactionFinished(p0: TransactionResult?) {
@@ -102,19 +119,19 @@ class MainActivity : AppCompatActivity(), TransactionFinishedCallback {
                 when(p0.status){
                     TransactionResult.STATUS_SUCCESS -> {
                         Log.e("ENOG", "DONE : ${p0.response.transactionStatus} | ${p0.response.transactionId}")
-                        toast("DONE \n Transaction ID : ${p0.response.transactionId}")
+                        toast("Payment Successfully")
                     }
                     TransactionResult.STATUS_PENDING -> {
                         Log.e("ENOG", "PENDING : ${p0.response.transactionStatus} | ${p0.response.transactionId}")
-                        toast("PENDING \n Transaction ID : ${p0.response.transactionId}")
+                        toast("Payment Pending")
                     }
                     TransactionResult.STATUS_FAILED -> {
                         Log.e("ENOG", "FAILED : ${p0.response.transactionStatus} | ${p0.response.statusMessage}")
-                        toast("FAILED \n Transaction ID : ${p0.response.statusMessage}")
+                        toast("Payment Failed")
                     }
                     TransactionResult.STATUS_INVALID -> {
                         Log.e("ENOG", "INVALID : ${p0.response.transactionStatus} | ${p0.response.statusMessage}")
-                        toast("INVALID \n Transaction ID : ${p0.response.statusMessage}")
+                        toast("Payment Invalid")
                     }
                 }
 
@@ -126,6 +143,7 @@ class MainActivity : AppCompatActivity(), TransactionFinishedCallback {
                 toast("Transaction Failed")
             }
         }
+        finish()
     }
 
     private fun toast(text: String){
