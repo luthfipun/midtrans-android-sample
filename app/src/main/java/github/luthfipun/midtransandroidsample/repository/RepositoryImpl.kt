@@ -1,6 +1,7 @@
 package github.luthfipun.midtransandroidsample.repository
 
 import github.luthfipun.midtransandroidsample.data.network.RemoteService
+import github.luthfipun.midtransandroidsample.domain.model.Order
 import github.luthfipun.midtransandroidsample.domain.model.Product
 import github.luthfipun.midtransandroidsample.domain.util.DataState
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,24 @@ class RepositoryImpl @Inject constructor(
             val getProducts = remoteService.products()
             if (getProducts.status && getProducts.list.isNotEmpty()){
                 emit(DataState.Success(getProducts.toProductList()))
+            }else {
+                emit(DataState.Error(Exception("List product is empty")))
+            }
+        }catch (e: Exception){
+            emit(DataState.Error(e))
+        }
+    }
+
+    override suspend fun getTransactions(): Flow<DataState<List<Order>>> = flow {
+        emit(DataState.Loading)
+
+        // no paging for now
+        try {
+            val getTransactions = remoteService.transactions(1)
+            if (getTransactions.status && getTransactions.page.total > 0){
+                emit(DataState.Success(getTransactions.page.toListOrder()))
+            }else {
+                emit(DataState.Error(Exception("List transaction is empty")))
             }
         }catch (e: Exception){
             emit(DataState.Error(e))

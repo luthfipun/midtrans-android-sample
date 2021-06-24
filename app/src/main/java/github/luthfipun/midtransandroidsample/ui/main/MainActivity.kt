@@ -13,6 +13,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import github.luthfipun.midtransandroidsample.R
 import github.luthfipun.midtransandroidsample.databinding.ActivityMainBinding
+import github.luthfipun.midtransandroidsample.ui.fragment.order.OrderFragment
 import github.luthfipun.midtransandroidsample.ui.fragment.product.ProductFragment
 
 @AndroidEntryPoint
@@ -32,8 +33,11 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun initView() {
-        binding.bottomNavigation.setOnNavigationItemSelectedListener(this)
-        binding.bottomNavigation.setOnNavigationItemReselectedListener(this)
+        binding.bottomNavigation.apply {
+            setOnNavigationItemSelectedListener(this@MainActivity)
+            setOnNavigationItemReselectedListener(this@MainActivity)
+            selectedItemId = R.id.nav_product
+        }
     }
 
     private fun checkPhonePermission() {
@@ -52,6 +56,10 @@ class MainActivity : AppCompatActivity(),
                 true
             }
             R.id.nav_order -> {
+                replaceContainer(
+                    OrderFragment.newInstance(),
+                    item.title.toString()
+                )
                 true
             }
             else -> false
@@ -63,6 +71,12 @@ class MainActivity : AppCompatActivity(),
             R.id.nav_product -> {
                 replaceContainer(
                     ProductFragment.newInstance(),
+                    item.title.toString()
+                )
+            }
+            R.id.nav_order -> {
+                replaceContainer(
+                    OrderFragment.newInstance(),
                     item.title.toString()
                 )
             }
