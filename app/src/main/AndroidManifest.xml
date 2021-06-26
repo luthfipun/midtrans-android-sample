@@ -15,7 +15,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MidtransAndroidSample"
         android:usesCleartextTraffic="false">
-        <activity android:name=".ui.main.PaymentActivity"></activity>
+        <activity android:name=".ui.main.OrderDetailActivity" />
+        <activity android:name=".ui.main.PaymentActivity" />
         <activity android:name=".ui.main.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

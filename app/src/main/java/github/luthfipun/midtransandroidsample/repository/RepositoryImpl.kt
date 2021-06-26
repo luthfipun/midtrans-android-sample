@@ -2,6 +2,7 @@ package github.luthfipun.midtransandroidsample.repository
 
 import github.luthfipun.midtransandroidsample.data.network.RemoteService
 import github.luthfipun.midtransandroidsample.domain.model.Order
+import github.luthfipun.midtransandroidsample.domain.model.OrderDetail
 import github.luthfipun.midtransandroidsample.domain.model.Product
 import github.luthfipun.midtransandroidsample.domain.util.DataState
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,21 @@ class RepositoryImpl @Inject constructor(
                 emit(DataState.Success(getTransactions.page.toListOrder()))
             }else {
                 emit(DataState.Error(Exception("List transaction is empty")))
+            }
+        }catch (e: Exception){
+            emit(DataState.Error(e))
+        }
+    }
+
+    override suspend fun getTransactionDetail(id: Int): Flow<DataState<OrderDetail>> = flow {
+        emit(DataState.Loading)
+
+        try {
+            val getTransactionDetail = remoteService.transactionDetail(id)
+            if (getTransactionDetail.status){
+                emit(DataState.Success(getTransactionDetail.data.toOrderDetail()))
+            }else {
+                emit(DataState.Error(Exception("Internal Server Error")))
             }
         }catch (e: Exception){
             emit(DataState.Error(e))

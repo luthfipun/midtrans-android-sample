@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import github.luthfipun.midtransandroidsample.databinding.FragmentOrderBinding
 import github.luthfipun.midtransandroidsample.domain.model.Order
 import github.luthfipun.midtransandroidsample.domain.util.DataState
+import github.luthfipun.midtransandroidsample.ui.main.OrderDetailActivity
 
 @AndroidEntryPoint
 class OrderFragment: Fragment(), OrderAdapter.Listener {
@@ -86,6 +87,8 @@ class OrderFragment: Fragment(), OrderAdapter.Listener {
     }
 
     override fun onOrderTapped(order: Order) {
-
+        startActivity(
+            context?.let { OrderDetailActivity.createIntent(it, order) }
+        )
     }
 }
